@@ -17,7 +17,7 @@ import itertools
 from typing import Any
 
 # pylint: disable=g-bad-import-order
-from common import modeling
+# from common import modeling
 from third_party.factscore import atomic_facts
 # pylint: enable=g-bad-import-order
 
@@ -34,9 +34,9 @@ def convert_atomic_facts_to_dicts(
   ]
 
 
-def main(response: str, model: modeling.Model) -> dict[str, Any]:
+def main(response: str, rater) -> dict[str, Any]:
   atomic_fact_generator = atomic_facts.AtomicFactGenerator(
-      api_key='', gpt3_cache_file='', other_lm=model
+      api_key='', gpt3_cache_file='', other_lm=rater
   )
   facts, _ = atomic_fact_generator.run(response)
   facts_as_dict = convert_atomic_facts_to_dicts(facts)

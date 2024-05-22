@@ -113,7 +113,8 @@ def maybe_get_next_search(
   full_prompt = _NEXT_SEARCH_FORMAT.replace(_STATEMENT_PLACEHOLDER, atomic_fact)
   full_prompt = full_prompt.replace(_KNOWLEDGE_PLACEHOLDER, knowledge)
   full_prompt = utils.strip_string(full_prompt)
-  model_response = model.generate(full_prompt, do_debug=debug)
+  # model_response = model.generate(full_prompt, do_debug=debug)
+  model_response = model.invoke(full_prompt).content
   query = utils.extract_first_code_block(model_response, ignore_language=True)
 
   if model_response and query:
@@ -125,7 +126,7 @@ def maybe_get_next_search(
 def maybe_get_final_answer(
     atomic_fact: str,
     searches: list[GoogleSearchResult],
-    model: modeling.Model,
+    model,
     debug: bool = safe_config.debug_safe,
 ) -> FinalAnswer | None:
   """Get the final answer from the model."""
@@ -135,7 +136,8 @@ def maybe_get_final_answer(
   )
   full_prompt = full_prompt.replace(_KNOWLEDGE_PLACEHOLDER, knowledge)
   full_prompt = utils.strip_string(full_prompt)
-  model_response = model.generate(full_prompt, do_debug=debug)
+  # model_response = model.generate(full_prompt, do_debug=debug)
+  model_response = model.invoke(full_prompt).content
   answer = utils.extract_first_square_brackets(model_response)
   answer = re.sub(r'[^\w\s]', '', answer).strip()
 
@@ -147,7 +149,7 @@ def maybe_get_final_answer(
 
 def check_atomic_fact(
     atomic_fact: str,
-    rater: modeling.Model,
+    rater,
     max_steps: int = safe_config.max_steps,
     max_retries: int = safe_config.max_retries,
     debug: bool = safe_config.debug_safe,

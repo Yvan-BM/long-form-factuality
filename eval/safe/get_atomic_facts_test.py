@@ -24,7 +24,7 @@ from unittest import mock
 from absl.testing import absltest
 
 # pylint: disable=g-bad-import-order
-from common import modeling
+# from common import modeling
 from eval.safe import get_atomic_facts
 # pylint: enable=g-bad-import-order
 

@@ -16,7 +16,7 @@
 from typing import Any
 
 # pylint: disable=g-bad-import-order
-from common import modeling
+# from common import modeling
 from common import utils
 from eval.safe import config as safe_config
 # pylint: enable=g-bad-import-order
@@ -228,7 +228,7 @@ def check_relevance(
     prompt: str,
     response: str,
     atomic_fact: str,
-    model: modeling.Model,
+    model,
     do_debug: bool = safe_config.debug_safe,
     max_retries: int = safe_config.max_retries,
 ) -> tuple[str, bool]:
@@ -240,7 +240,8 @@ def check_relevance(
   model_response, answer, num_tries = '', '', 0
 
   while not answer and num_tries <= max_retries:
-    model_response = model.generate(full_prompt, do_debug=do_debug)
+    # model_response = model.generate(full_prompt, do_debug=do_debug)
+    model_response = model.invoke(full_prompt).content
     answer = utils.extract_first_square_brackets(model_response)
     answer = answer if answer in [SYMBOL, NOT_SYMBOL] else None
     num_tries += 1
@@ -252,7 +253,7 @@ def check_relevance(
 def revise_fact(
     response: str,
     atomic_fact: str,
-    model: modeling.Model,
+    model,
     do_debug: bool = safe_config.debug_safe,
     max_retries: int = safe_config.max_retries,
 ) -> tuple[str, str]:
@@ -263,7 +264,8 @@ def revise_fact(
   model_response, revised_fact, num_tries = '', '', 0
 
   while not revised_fact and num_tries <= max_retries:
-    model_response = model.generate(full_prompt, do_debug=do_debug)
+    # model_response = model.generate(full_prompt, do_debug=do_debug)
+    model_response = model.invoke(full_prompt).content
     revised_fact = utils.extract_first_code_block(
         model_response, ignore_language=True
     )
@@ -273,13 +275,15 @@ def revise_fact(
 
 
 def main(
-    prompt: str, response: str, atomic_fact: str, model: modeling.Model
+    prompt: str, response: str, atomic_fact: str, model
 ) -> tuple[bool, str, dict[str, Any]]:
   """Check if the fact is relevant and modify it to be self-contained."""
   model_responses = {'atomic_fact': atomic_fact}
+  print('here22')
   model_responses['revised_fact'], atomic_fact = revise_fact(
       response=response, atomic_fact=atomic_fact, model=model
   )
+  
   model_responses['is_relevant'], is_relevant = check_relevance(
       prompt=prompt, response=response, atomic_fact=atomic_fact, model=model
   )

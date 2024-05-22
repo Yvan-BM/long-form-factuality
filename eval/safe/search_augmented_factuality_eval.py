@@ -12,17 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Use a search-augmented LLM to evaluate factuality."""
-
+import sys
+sys.path.append('../..')
 import collections
 import dataclasses
 from typing import Any
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # pylint: disable=g-bad-import-order
-from common import modeling
+# from common import modeling
 from common import utils
 from eval.safe import classify_relevance
 from eval.safe import get_atomic_facts
 from eval.safe import rate_atomic_fact
+from langchain_openai import AzureChatOpenAI, AzureOpenAI
 # pylint: enable=g-bad-import-order
 
 IRRELEVANT_LABEL = 'Irrelevant'
@@ -94,7 +101,7 @@ def classify_relevance_and_rate_single(
     response: str,
     sentence: str,
     atomic_fact: str,
-    rater: modeling.Model,
+    rater,
 ) -> tuple[CheckedStatement, dict[str, Any], dict[str, Any]]:
   """Classify relevance of and rate a single atomic fact."""
   is_relevant, self_contained_atomic_fact, revised_fact_dict = (
@@ -136,20 +143,20 @@ def classify_relevance_and_rate(
     prompt: str,
     response: str,
     sentences_and_atomic_facts: list[dict[str, Any]],
-    rater: modeling.Model,
+    rater,
 ) -> dict[str, Any]:
   """Classify relevance of and rate all given atomic facts."""
   checked_statements, revised_fact_dicts, past_steps_dicts = [], [], []
-
+  
   for sentence_data in sentences_and_atomic_facts:
     sentence = sentence_data['sentence']
     assert 'atomic_facts' in sentence_data
     assert isinstance(sentence_data['atomic_facts'], list)
-
+    
     for atomic_fact in sentence_data['atomic_facts']:
       checked_statement, num_fails = None, 0
       revised_fact_dict, past_steps_dict = {}, {}
-
+      
       while checked_statement is None and num_fails < _MAX_PIPELINE_RETRIES:
         try:
           checked_statement, revised_fact_dict, past_steps_dict = (
@@ -178,15 +185,31 @@ def classify_relevance_and_rate(
       **count_labels(checked_statements=checked_statements),
   }
 
+def getModel():
+  # model = AzureOpenAI(
+  #   deployment_name="gpt4",
+  # )
+  model = AzureChatOpenAI(
+        openai_api_version=os.environ["AZURE_OPENAI_API_VERSION"],
+        azure_deployment='gpt4',
+    )
+  return model
 
-def main(prompt: str, response: str, rater: modeling.Model) -> dict[str, Any]:
-  atomic_facts = get_atomic_facts.main(response=response, model=rater)
+def main(prompt: str, response: str) -> dict[str, Any]:
+  atomic_facts = get_atomic_facts.main(response=response, rater=getModel())
+  print("----------------------atomic_facts---------------------")
+  print(atomic_facts['all_atomic_facts'])
+  print("--------------------------------------------------------")
+
   rating_result = classify_relevance_and_rate(
       prompt=prompt,
       response=response,
       sentences_and_atomic_facts=atomic_facts['all_atomic_facts'],
-      rater=rater,
+      rater=getModel(),
   )
+  print("-------------rating_result-----------------")
+  print(rating_result)
+  print("--------------------------------------------------------")
   return {
       'prompt': prompt, 'response': response, **atomic_facts, **rating_result
   }
