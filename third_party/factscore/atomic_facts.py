@@ -52,7 +52,7 @@ MONTHS = [
     ]
 ]
 SPACY_MODEL = spacy.load('en_core_web_sm')
-DEMON_DIR = 'third_party/factscore/demos/'
+DEMON_DIR = '../../third_party/factscore/demos/'
 ATOMIC_FACT_INSTRUCTION = """\
 Instructions:
 1. You are given a sentence. Your task is to break the sentence down into a \
@@ -252,7 +252,8 @@ class AtomicFactGenerator(object):
       for prompt in prompts:
         if self.other_lm is not None:
           prompt_to_send = ATOMIC_FACT_INSTRUCTION + prompt  # add instructions
-          output = self.other_lm.generate(prompt_to_send, temperature=0)
+          # output = self.other_lm.generate(prompt_to_send, temperature=0)
+          output = self.other_lm.invoke(prompt_to_send).content
         else:
           raise ValueError('other_lm is None')
 
